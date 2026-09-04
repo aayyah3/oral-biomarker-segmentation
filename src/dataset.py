@@ -80,14 +80,17 @@ class CD44Dataset(Dataset):
 
     def __getitem__(self, idx):
         mat_path, mask_path = self.samples[idx]
+        # VERSION B
+        # with h5py.File(mat_path, 'r') as f:
+        #     raw = f['patch_15_chw'][:]               # (256, 256, 15)
 
-        # load channel 14 only
+        # ftir_chw = np.transpose(raw, (2, 1, 0))      # Version B — correct orientation
+        # img = torch.tensor(ftir_chw.copy(), dtype=torch.float32)  # (15, 256, 256)
+        # img = img[13:14, :, :]                        # channel 14 → (1, 256, 256)
         with h5py.File(mat_path, 'r') as f:
-            ftir = f['patch_15_chw'][:]              # (256, 256, 15)
-
-        img = torch.tensor(ftir.copy(), dtype=torch.float32).permute(2, 0, 1)  # (15, 256, 256)
-        img = img[13:14, :, :]                       # channel 14 only → (1, 256, 256)
-
+            raw = f['patch_15_chw'][:]                        # (256, 256, 15)
+        img = torch.tensor(raw.copy(), dtype=torch.float32).permute(2, 0, 1)  # (15, 256, 256)
+        img = img[13:14, :, :]   
         # load mask
         mask = np.array(Image.open(mask_path)).astype(np.int64)
         if mask.ndim == 3:
